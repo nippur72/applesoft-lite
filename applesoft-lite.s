@@ -1,4 +1,4 @@
-; Applesoft Lite
+	; Applesoft Lite
 ;
 ; Disassembled from the Apple II+ ROMs with da65 V2.12.0
 ;
@@ -8,20 +8,20 @@
 ; Adapted for the Replica-1 by Tom Greene
 ; 7-May-2008
 ;
-; v0.4
-
-
+; Changed to support LOAD & SAVE via Apple-1 Serial Interface by Piotr Jaczewski
+; 15-Jan-2021
+;
 
 .setcpu "6502"
 .segment "BASIC"
 
 .export FIX_LINKS, ERROR, INPUTBUFFER
-.exportzp ERR_SYNTAX, ERR_NOCFFA
+.exportzp ERR_SYNTAX, ERR_NOSERIAL
 
 .import CLS, OUTDO, CRDO, OUTSP, OUTQUES	; Imports from io.s
 .import KEYBOARD, GETLN, RDKEY
 
-.import CFFALoad, CFFASave, CFFAMenu		; Imports from cffa1.s
+.import SerialLoad, SerialSave, SerialMenu		; Imports from apple1serial.s
 
 .include "macros.s"
 .include "zeropage.s"
@@ -95,9 +95,9 @@ TOKEN_ADDRESS_TABLE:
 	.addr	CLEAR - 1	; $9B... 154... CLEAR
 	.addr	GET - 1		; $9C... 155... GET
 	.addr	NEW - 1		; $9D... 156... NEW
-	.addr	CFFAMenu - 1	; $9E... 157... MENU
-	.addr	CFFASave - 1	; $9F... 158... SAVE
-	.addr	CFFALoad - 1	; $A0... 160... LOAD
+	.addr	SerialMenu - 1	; $9E... 157... MENU
+	.addr	SerialSave - 1	; $9F... 158... SAVE
+	.addr	SerialLoad - 1	; $A0... 160... LOAD
 	.addr	CLS - 1		; $A1... 161... CLS
 ; ----------------------------------------------------------------------------
 UNFNC:  .addr	SGN		; $B1... 177... SGN
@@ -189,9 +189,9 @@ TOKEN_NAME_TABLE:
 	htasc	"CLEAR"		; $9B... 155
 	htasc	"GET"		; $9C... 156
 	htasc	"NEW"		; $9D... 157
-	htasc	"MENU"		; $9E... 158   New tokens 
+	htasc	"MENU"		; $9E... 158   New tokens
 	htasc	"SAVE"		; $9F... 159   for
-	htasc	"LOAD"		; $A0... 160   CFFA I/O
+	htasc	"LOAD"		; $A0... 160   Apple-1 Serial I/O
 	htasc	"CLS"		; $A1... 161   New token to clear screen
 	htasc	"TO"		; $A2... 162
 	htasc	"SPC("		; $A3... 163
@@ -281,8 +281,8 @@ ERR_FRMCPX	:= <(*-ERROR_MESSAGES)
 ERR_CANTCONT	:= <(*-ERROR_MESSAGES)
 	htasc	"CAN'T CONT"
 
-ERR_NOCFFA	:= <(*-ERROR_MESSAGES)	; New error message for CFFA1 I/O
-	htasc	"NO CFFA"
+ERR_NOSERIAL	:= <(*-ERROR_MESSAGES)	; New error message for Apple 1 Serial IO
+	htasc	"NO SERIAL"
 ; ----------------------------------------------------------------------------
 QT_ERROR:
 	.byte	" ERR"
@@ -415,7 +415,7 @@ REASON:	cpy	FRETOP+1	; HIGH BYTE
 	dex
 	bpl	@2
 	jsr	GARBAG		; MAKE AS MUCH ROOM AS POSSIBLE
-	ldx	#TEMP1-FAC+1	; RESTORE TEMP1 AND TEMP2
+	ldx	#TEMP1-FAC+1+256	; RESTORE TEMP1 AND TEMP2
 @3:	pla			; AND (Y,A)
 	sta	FAC,x
 	inx
@@ -638,7 +638,7 @@ INLIN2:	stx	PROMPT
 ;	dex
 ;	bne	@2
 ;@3:	lda	#0		; (Y,X) POINTS AT BUFFER-1
-	ldx	#<INPUTBUFFER-1
+	ldx	#<INPUTBUFFER-1+256
 	ldy	#>INPUTBUFFER-1
 	rts
 
@@ -751,7 +751,7 @@ PARSE:	inx			; NEXT INPUT CHARACTER
 ; ---END OF LINE------------------
 @17:	sta	INPUTBUFFER-3,y	; STORE ANOTHER 00 ON END
 	dec	TXTPTR+1	; SET TXTPTR = INPUTBUFFER-1
-	lda	#<INPUTBUFFER-1
+	lda	#<INPUTBUFFER-1+256
 	sta	TXTPTR
 	rts
 
@@ -941,7 +941,7 @@ LIST4:	bpl	LIST2		; BRANCH IF NOT A TOKEN
 	sty	FAC		; POINT FAC TO TABLE
 	ldy	#>(TOKEN_NAME_TABLE-$100)
 	sty	FAC+1
-	ldy	#-1
+	ldy	#$FF
 @1:	dex			; SKIP KEYWORDS UNTIL REACH THIS ONE
 	beq	@3
 @2:	jsr	GETCHR		; BUMP Y, GET CHAR FROM TABLE
@@ -2961,7 +2961,7 @@ STR:	jsr	CHKNUM		; EXPRESSION MUST BE NUMERIC
 	jsr	FOUT1		; CONVERT FAC TO STRING
 	pla			; POP RETURN OFF STACK
 	pla
-	lda	#<STACK-1	; POINT TO STACK-1
+	lda	#<STACK-1+256	; POINT TO STACK-1
 	ldy	#>STACK-1	; (WHICH=0)
 	beq	STRLIT		; ...ALWAYS, CREATE DESC & MOVE STRING
 
@@ -4258,7 +4258,7 @@ FDIVT:	beq	@8		; FAC = 0, DIVIDE BY ZERO ERROR
 	jsr	ADD_EXPONENTS
 	inc	FAC
 	beq	JOV		; OVERFLOW
-	ldx	#-4		; INDEX FOR RESULT
+	ldx	#252		; INDEX FOR RESULT
 	lda	#1		; SENTINEL
 @1:	ldy	ARG+1		; SEE IF FAC CAN BE SUBTRACTED
 	cpy	FAC+1
@@ -4850,7 +4850,7 @@ FOUT1:	lda	#'-'		; IN CASE VALUE NEGATIVE
 @3:	lda	#<CON_BILLION	; MULTIPLY BY 1E9
 	ldy	#>CON_BILLION	; TO GIVE ADJUSTMENT A HEAD START
 	jsr	FMULT
-	lda	#-9		; EXPONENT ADJUSTMENT
+	lda	#247		; EXPONENT ADJUSTMENT
 @4:	sta	TMPEXP		; 0 OR -9
 ; ----------------------------------------------------------------------------
 ; ADJUST UNTIL 1E8 <= (FAC) <1E9
@@ -5061,7 +5061,7 @@ FPWRT:	beq	EXP		; IF FAC=0, ARG^FAC=EXP(0)
 	tya			; MAKE ARG SIGN + AS IT IS MOVED TO FAC
 	ldy	CHARAC		; INTEGRAL, SO ALLOW NEGATIVE ARG
 @2:	jsr	MFA		; MOVE ARGUMENT TO FAC
-	tya			; SAVE FLAG FOR NEGATIVE ARG (0=+) 
+	tya			; SAVE FLAG FOR NEGATIVE ARG (0=+)
 	pha
 	jsr	LOG		; GET LOG(ARG)
 	lda	#TEMP3		; MULTIPLY BY POWER
@@ -5256,7 +5256,7 @@ RND:	jsr	SIGN		; REDUCE ARGUMENT TO -1, 0, OR +1
 ; GENERIC COPY OF CHRGET SUBROUTINE, WHICH
 ; IS COPIED INTO $00B1...$00C8 DURING INITIALIZATION
 ;
-; CORNELIS BONGERS DESCRIBED SEVERAL IMPROVEMENTS 
+; CORNELIS BONGERS DESCRIBED SEVERAL IMPROVEMENTS
 ; TO CHRGET IN MICRO MAGAZINE OR CALL A.P.P.L.E.
 ; (I DON'T REMEMBER WHICH OR EXACTLY WHEN)
 ; ----------------------------------------------------------------------------
@@ -5272,7 +5272,7 @@ GENERIC_CHRGET:
 	sec			; TEST FOR NUMERIC RANGE IN WAY THAT
 	sbc	#'0'		; CLEARS CARRY IF CHAR IS DIGIT
 	sec			; AND LEAVES CHAR IN A-REG
-	sbc	#-'0'
+	sbc	#-'0'+256
 @2:	rts
 
 
@@ -5305,7 +5305,7 @@ COLDSTART:
 ; ----------------------------------------------------------------------------
 ; MOVE GENERIC CHRGET AND RANDOM SEED INTO PLACE
 ;
-; NOTE THAT LOOP VALUE IS WRONG! 
+; NOTE THAT LOOP VALUE IS WRONG!
 ; THE LAST BYTE OF THE RANDOM SEED IS NOT
 ; COPIED INTO PAGE ZERO!
 ; ----------------------------------------------------------------------------
@@ -5498,4 +5498,3 @@ RESUME:	lda	ERRLIN		; RESTORE LINE # AND TXTPTR
 	ldx	ERRSTK		; RETRIEVE STACK PNTR AS IT WAS
 	txs			; BEFORE STATEMENT SCANNED
 	jmp	NEWSTT		; DO STATEMENT AGAIN
-
