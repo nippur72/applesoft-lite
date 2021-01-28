@@ -602,6 +602,8 @@ FIX_LINKS:
 	jmp	RESTART
 @2:	ldy	#4		; FIND END OF THIS LINE
 @3:	iny			; (NOTE MAXIMUM LENGTH < 256)
+	;lda #'C'
+	;jsr OUTDO
 	lda	(INDEX),y
 	bne	@3
 	iny			; COMPUTE ADDRESS OF NEXT LINE
@@ -5498,3 +5500,64 @@ RESUME:	lda	ERRLIN		; RESTORE LINE # AND TXTPTR
 	ldx	ERRSTK		; RETRIEVE STACK PNTR AS IT WAS
 	txs			; BEFORE STATEMENT SCANNED
 	jmp	NEWSTT		; DO STATEMENT AGAIN
+
+; ----------------------------------------------------------------------------
+; START FROM CARTRIDGE ROUTINE
+; ----------------------------------------------------------------------------
+STARTFROMCART:
+	ldx	#$FF		; SET DIRECT MODE FLAG
+	stx	CURLIN+1
+	ldx	#$FB		; SET STACK POINTER, LEAVING ROOM FOR
+	txs			; LINE BUFFER DURING PARSING
+	lda	#<COLDSTART	; SET RESTART TO COLD.START
+	ldy	#>COLDSTART	; UNTIL COLDSTART IS COMPLETED
+	sta	GOWARM+1
+	sty	GOWARM+2
+	sta	GOSTROUTZ+1	; ALSO SECOND USER VECTOR...
+	sty	GOSTROUTZ+2	; ..WE SIMPLY MUST FINISH COLD.START!
+	lda	#$4C		; "JMP" OPCODE FOR 4 VECTORS
+	sta	GOWARM		; WARM START
+	sta	GOSTROUTZ	; ANYONE EVER USE THIS ONE?
+	sta	JMPADRS		; USED BY FUNCTIONS (JSR JMPADRS)
+
+; ----------------------------------------------------------------------------
+; MOVE GENERIC CHRGET AND RANDOM SEED INTO PLACE
+;
+; NOTE THAT LOOP VALUE IS WRONG!
+; THE LAST BYTE OF THE RANDOM SEED IS NOT
+; COPIED INTO PAGE ZERO!
+; ----------------------------------------------------------------------------
+	ldx	#GENERIC_END-GENERIC_CHRGET-1
+@1:	lda	GENERIC_CHRGET-1,x
+	sta	CHRGET-1,x
+	dex
+	bne	@1
+; ----------------------------------------------------------------------------
+	txa			; A=0
+	sta	SHIFTSIGNEXT
+	sta	LASTPT+1
+	pha			; PUT $00 ON STACK (WHAT FOR?)
+	lda	#3		; SET LENGTH OF TEMP. STRING DESCRIPTORS
+	sta	DSCLEN		; FOR GARBAGE COLLECTION SUBROUTINE
+	jsr	CRDO		; PRINT <RETURN>
+	lda	#1		; SET UP FAKE FORWARD LINK
+	sta	INPUTBUFFER-3
+	sta	INPUTBUFFER-4
+	ldx	#TEMPST		; INIT INDEX TO TEMP STRING DESCRIPTORS
+	stx	TEMPPT
+	jsr STXTPT    ; SET TXTPTR TO TXTTAB-1
+	ldy #0
+	lda #0
+	sta (TXTPTR),y ; ZERO THE TXTPTR - FOR SAKE OF RUN STATEMENT
+	lda	#<STROUT	; PUT CORRECT ADDRESSES IN TWO
+	ldy	#>STROUT	; USER VECTORS
+	sta	GOSTROUTZ+1
+	sty	GOSTROUTZ+2
+	lda	#<RESTART
+	ldy	#>RESTART
+	sta	GOWARM+1
+	sty	GOWARM+2
+	lda #$00
+	sta CURLIN
+	sta CURLIN+1
+	jmp	FIX_LINKS ; FIX LINKS FOR PROGRAM

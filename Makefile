@@ -1,7 +1,8 @@
-AFLAGS  =
-LFLAGS  = -C apple1cartridge.cfg
+AFLAGS  = -g
+LFLAGS  = -C apple1cartridge.cfg -Ln applesoft-lite.label
 BINFILE = applesoft-lite.bin
 OBJS    = applesoft-lite.o io.o apple1serial.o
+LABELS  = applesoft-lite.label
 
 $(BINFILE): $(OBJS)
 	ld65 $(LFLAGS) $(OBJS) -o $(BINFILE)
@@ -19,4 +20,4 @@ io.o: io.s
 	ca65 $(AFLAGS) $<
 
 clean:
-	rm $(OBJS) $(BINFILE)
+	rm $(OBJS) $(BINFILE) $(LABELS)
