@@ -1,4 +1,4 @@
-; Zero Page locatinos used by Applesoft Lite
+; Zero Page locations used by Applesoft Lite
 
 ; the following locations have been moved to avoid conflict with SDCARD
 ; (SDCARD uses uses all locations below $4A)
