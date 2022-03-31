@@ -5380,8 +5380,35 @@ COLDSTART:
 	;sta	GOWARM+1
 	;sty	GOWARM+2
 	;jmp	(GOWARM+1)	; SILLY, WHY NOT JUST "JMP RESTART"
+
+   ;prints boot message
+   lda   #<BOOT_MSG
+   ldy   #>BOOT_MSG
+   jsr   STROUT
+
+   ; computer FRE(0) in X/A
+   sec			
+	lda	FRETOP
+	sbc	STREND
+	tax
+	lda	FRETOP+1
+	sbc	STREND+1	
+
+   ; print int number in X/A
+   jsr   LINPRT
+
+   ; prints "bytes free"
+   lda   #<BYTESFREE_MSG
+   ldy   #>BYTESFREE_MSG
+   jsr   STROUT
+
 	jmp     RESTART
 
+BOOT_MSG:
+   ;      1234567890123456789012345678901234567890
+   .byte $0d, "*** APPLESOFT BASIC LITE SD V1.1 ***", $0d, $0d, $00
+BYTESFREE_MSG:
+   .byte " BYTES FREE", $0d, $00
 
 ; ----------------------------------------------------------------------------
 ; "CALL" STATEMENT
