@@ -29,7 +29,9 @@
 
 ; ----------------------------------------------------------------------------
 STACK		:= $0100
+STACK		   := $0100
 INPUTBUFFER	:= $0200
+RAMSTART    := $0800
 
 ; ----------------------------------------------------------------------------
 ; Applesoft Tokens
@@ -5332,8 +5334,8 @@ COLDSTART:
 ; ----------------------------------------------------------------------------
 ; FIND HIGH END OF RAM
 ; ----------------------------------------------------------------------------
-	lda	#<$0800		; SET UP POINTER TO LOW END OF RAM
-	ldy	#>$0800
+	lda	#<RAMSTART		; SET UP POINTER TO LOW END OF RAM
+	ldy	#>RAMSTART
 	sta	LINNUM
 	sty	LINNUM+1
 	ldy	#0
@@ -5354,8 +5356,8 @@ COLDSTART:
 	sta	MEMSIZ+1
 	sty	FRETOP		; SET HIMEM AND BOTTOM OF STRINGS
 	sta	FRETOP+1
-	ldx	#<$0800		; SET PROGRAM POINTER TO $0800
-	ldy	#>$0800
+	ldx	#<RAMSTART		; SET PROGRAM POINTER TO BEGIN OF RAM (WAS: $0800)
+	ldy	#>RAMSTART
 	stx	TXTTAB
 	sty	TXTTAB+1
 	ldy	#0		; TURN OFF SEMI-SECRET LOCK FLAG
