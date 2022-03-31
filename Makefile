@@ -1,7 +1,7 @@
 AFLAGS  = -g
 LFLAGS  = -C apple1cartridge.cfg -Ln applesoft-lite.label
 BINFILE = applesoft-lite.bin
-OBJS    = applesoft-lite.o io.o apple1serial.o
+OBJS    = applesoft-lite.o io.o apple1sdcard.o
 LABELS  = applesoft-lite.label
 
 $(BINFILE): $(OBJS)
@@ -13,7 +13,7 @@ applesoft-lite.o: applesoft-lite.s
 wozmon.o: wozmon.s
 	ca65 $(AFLAGS) $<
 
-apple1serial.o: apple1serial.s
+apple1sdcard.o: apple1sdcard.s
 	ca65 $(AFLAGS) $<
 
 io.o: io.s
