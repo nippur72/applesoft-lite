@@ -3,7 +3,10 @@
 ; the following locations have been moved to avoid conflict with SDCARD
 ; (SDCARD uses uses all locations below $4A)
 ; free zone is $CE-$D5, $F0-$F1, $F9 
+; GOWARM and GOSTROUTZ have been removed to save 6 bytes
 
+;GOWARM		:= $0000; Gets "jmp RESTART"
+;GOSTROUTZ	:= $0003; Gets "jmp STROUT"
 CHARAC		:= $00CE; Alternate string terminator
 ENDCHR		:= $00CF; String terminator
 TKNCNTR		:= $00D0; Used in PARSE
