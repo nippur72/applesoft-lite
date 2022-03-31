@@ -16,12 +16,12 @@
 .segment "BASIC"
 
 .export FIX_LINKS, ERROR, INPUTBUFFER
-.exportzp ERR_SYNTAX, ERR_NOSERIAL
+.exportzp ERR_SYNTAX, ERR_NOSDCARD
 
 .import CLS, OUTDO, CRDO, OUTSP, OUTQUES	; Imports from io.s
 .import KEYBOARD, GETLN, RDKEY
 
-.import SerialLoad, SerialSave, SerialMenu		; Imports from apple1serial.s
+.import SDCardLoad, SDCardSave, SDCardMenu		; Imports from apple1sdcard.s.s
 
 .include "macros.s"
 .include "zeropage.s"
@@ -95,9 +95,9 @@ TOKEN_ADDRESS_TABLE:
 	.addr	CLEAR - 1	; $9B... 154... CLEAR
 	.addr	GET - 1		; $9C... 155... GET
 	.addr	NEW - 1		; $9D... 156... NEW
-	.addr	SerialMenu - 1	; $9E... 157... MENU
-	.addr	SerialSave - 1	; $9F... 158... SAVE
-	.addr	SerialLoad - 1	; $A0... 160... LOAD
+	.addr	SDCardMenu - 1	; $9E... 157... MENU
+	.addr	SDCardSave - 1	; $9F... 158... SAVE
+	.addr	SDCardLoad - 1	; $A0... 160... LOAD
 	.addr	CLS - 1		; $A1... 161... CLS
 ; ----------------------------------------------------------------------------
 UNFNC:  .addr	SGN		; $B1... 177... SGN
@@ -281,8 +281,8 @@ ERR_FRMCPX	:= <(*-ERROR_MESSAGES)
 ERR_CANTCONT	:= <(*-ERROR_MESSAGES)
 	htasc	"CAN'T CONT"
 
-ERR_NOSERIAL	:= <(*-ERROR_MESSAGES)	; New error message for Apple 1 Serial IO
-	htasc	"NO SERIAL"
+ERR_NOSDCARD	:= <(*-ERROR_MESSAGES)	; New error message for Apple 1 Serial IO
+	htasc	"NO SDCARD"
 ; ----------------------------------------------------------------------------
 QT_ERROR:
 	.byte	" ERR"
