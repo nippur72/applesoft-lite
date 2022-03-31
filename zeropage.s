@@ -1,20 +1,45 @@
-; Zero Page locatinos used by Applesoft Lite
+; Zero Page locations used by Applesoft Lite
 
-GOWARM		:= $0000	; Gets "jmp RESTART"
-GOSTROUTZ	:= $0003	; Gets "jmp STROUT"
-CHARAC		:= $000D	; Alternate string terminator
-ENDCHR		:= $000E	; String terminator
-TKNCNTR		:= $000F	; Used in PARSE
-EOLPNTR		:= $000F	; Used in NXLIN
-NUMDIM		:= $000F	; Used in array routines
-DIMFLG		:= $0010	
-VALTYP		:= $0011	; $: VALTYP=$FF; %: VALTYP+1=$80
-DATAFLG		:= $0013	; Used in PARSE
-GARFLG		:= $0013	; Used in GARBAG
-SUBFLG		:= $0014
-INPUTFLG	:= $0015	; = $40 for GET, $98 for READ
-CPRMASK		:= $0016	; Receives CPRTYP in FRMEVL
-PROMPT		:= $0033
+; the following locations have been moved to avoid conflict with SDCARD
+; (SDCARD uses uses all locations below $4A)
+; free zone is $CE-$D5, $F0-$F1, $F9 
+; GOWARM and GOSTROUTZ have been removed to save 6 bytes
+
+;GOWARM		:= $0000; Gets "jmp RESTART"
+;GOSTROUTZ	:= $0003; Gets "jmp STROUT"
+CHARAC		:= $00CE; Alternate string terminator
+ENDCHR		:= $00CF; String terminator
+TKNCNTR		:= $00D0; Used in PARSE
+EOLPNTR		:= $00D0; Used in NXLIN
+NUMDIM		:= $00D0; Used in array routines
+DIMFLG		:= $00D1;
+VALTYP		:= $00D2; $: VALTYP=$FF; %: VALTYP+1=$80
+DATAFLG		:= $00D4; Used in PARSE
+GARFLG		:= $00D4; Used in GARBAG
+SUBFLG		:= $00D5;
+INPUTFLG	   := $00F0; = $40 for GET, $98 for READ
+CPRMASK		:= $00F1; Receives CPRTYP in FRMEVL
+PROMPT		:= $00F9;
+
+; original allocation as per Applesoft Lite upstream
+;GOWARM		:= $0000; Gets "jmp RESTART"
+;GOSTROUTZ	:= $0003; Gets "jmp STROUT"
+;CHARAC		:= $000D; Alternate string terminator
+;ENDCHR		:= $000E; String terminator
+;TKNCNTR		:= $000F; Used in PARSE
+;EOLPNTR		:= $000F; Used in NXLIN
+;NUMDIM		:= $000F; Used in array routines
+;DIMFLG		:= $0010;
+;VALTYP		:= $0011; $: VALTYP=$FF; %: VALTYP+1=$80
+;DATAFLG		:= $0013; Used in PARSE
+;GARFLG		:= $0013; Used in GARBAG
+;SUBFLG		:= $0014;
+;INPUTFLG	   := $0015; = $40 for GET, $98 for READ
+;CPRMASK		:= $0016; Receives CPRTYP in FRMEVL
+;PROMPT		:= $0033;
+
+; non relocated ZP locations
+
 LINNUM		:= $0050	; Converted line #
 TEMPPT		:= $0052	; Last used temp string desc
 LASTPT		:= $0053	; Last used temp string pntr
@@ -72,6 +97,7 @@ SERPNT		:= $00AD	; pntr to series data in FP
 STRNG1		:= $00AB
 STRNG2		:= $00AD
 PRGEND		:= $00AF
+;B0-CD CHRGET+RANDOM SEED AREA
 CHRGET		:= $00B1
 CHRGOT		:= $00B7
 TXTPTR		:= $00B8

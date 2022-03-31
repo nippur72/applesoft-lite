@@ -16,12 +16,12 @@
 .segment "BASIC"
 
 .export FIX_LINKS, ERROR, INPUTBUFFER
-.exportzp ERR_SYNTAX, ERR_NOSERIAL
+.exportzp ERR_SYNTAX, ERR_NOSDCARD
 
 .import CLS, OUTDO, CRDO, OUTSP, OUTQUES	; Imports from io.s
 .import KEYBOARD, GETLN, RDKEY
 
-.import SerialLoad, SerialSave, SerialMenu		; Imports from apple1serial.s
+.import SDCardLoad, SDCardSave, SDCardMenu		; Imports from apple1sdcard.s.s
 
 .include "macros.s"
 .include "zeropage.s"
@@ -29,7 +29,9 @@
 
 ; ----------------------------------------------------------------------------
 STACK		:= $0100
+STACK		   := $0100
 INPUTBUFFER	:= $0200
+RAMSTART    := $0800
 
 ; ----------------------------------------------------------------------------
 ; Applesoft Tokens
@@ -95,9 +97,9 @@ TOKEN_ADDRESS_TABLE:
 	.addr	CLEAR - 1	; $9B... 154... CLEAR
 	.addr	GET - 1		; $9C... 155... GET
 	.addr	NEW - 1		; $9D... 156... NEW
-	.addr	SerialMenu - 1	; $9E... 157... MENU
-	.addr	SerialSave - 1	; $9F... 158... SAVE
-	.addr	SerialLoad - 1	; $A0... 160... LOAD
+	.addr	SDCardMenu - 1	; $9E... 157... MENU
+	.addr	SDCardSave - 1	; $9F... 158... SAVE
+	.addr	SDCardLoad - 1	; $A0... 160... LOAD
 	.addr	CLS - 1		; $A1... 161... CLS
 ; ----------------------------------------------------------------------------
 UNFNC:  .addr	SGN		; $B1... 177... SGN
@@ -281,8 +283,8 @@ ERR_FRMCPX	:= <(*-ERROR_MESSAGES)
 ERR_CANTCONT	:= <(*-ERROR_MESSAGES)
 	htasc	"CAN'T CONT"
 
-ERR_NOSERIAL	:= <(*-ERROR_MESSAGES)	; New error message for Apple 1 Serial IO
-	htasc	"NO SERIAL"
+ERR_NOSDCARD	:= <(*-ERROR_MESSAGES)	; New error message for Apple 1 Serial IO
+	htasc	"NO SDCARD"
 ; ----------------------------------------------------------------------------
 QT_ERROR:
 	.byte	" ERR"
@@ -5295,13 +5297,13 @@ COLDSTART:
 	txs			; LINE BUFFER DURING PARSING
 	lda	#<COLDSTART	; SET RESTART TO COLD.START
 	ldy	#>COLDSTART	; UNTIL COLDSTART IS COMPLETED
-	sta	GOWARM+1
-	sty	GOWARM+2
-	sta	GOSTROUTZ+1	; ALSO SECOND USER VECTOR...
-	sty	GOSTROUTZ+2	; ..WE SIMPLY MUST FINISH COLD.START!
+	;sta	GOWARM+1
+	;sty	GOWARM+2
+	;sta	GOSTROUTZ+1	; ALSO SECOND USER VECTOR...
+	;sty	GOSTROUTZ+2	; ..WE SIMPLY MUST FINISH COLD.START!
 	lda	#$4C		; "JMP" OPCODE FOR 4 VECTORS
-	sta	GOWARM		; WARM START
-	sta	GOSTROUTZ	; ANYONE EVER USE THIS ONE?
+	;sta	GOWARM		; WARM START
+	;sta	GOSTROUTZ	; ANYONE EVER USE THIS ONE?
 	sta	JMPADRS		; USED BY FUNCTIONS (JSR JMPADRS)
 
 ; ----------------------------------------------------------------------------
@@ -5332,8 +5334,8 @@ COLDSTART:
 ; ----------------------------------------------------------------------------
 ; FIND HIGH END OF RAM
 ; ----------------------------------------------------------------------------
-	lda	#<$0800		; SET UP POINTER TO LOW END OF RAM
-	ldy	#>$0800
+	lda	#<RAMSTART		; SET UP POINTER TO LOW END OF RAM
+	ldy	#>RAMSTART
 	sta	LINNUM
 	sty	LINNUM+1
 	ldy	#0
@@ -5354,8 +5356,8 @@ COLDSTART:
 	sta	MEMSIZ+1
 	sty	FRETOP		; SET HIMEM AND BOTTOM OF STRINGS
 	sta	FRETOP+1
-	ldx	#<$0800		; SET PROGRAM POINTER TO $0800
-	ldy	#>$0800
+	ldx	#<RAMSTART		; SET PROGRAM POINTER TO BEGIN OF RAM (WAS: $0800)
+	ldy	#>RAMSTART
 	stx	TXTTAB
 	sty	TXTTAB+1
 	ldy	#0		; TURN OFF SEMI-SECRET LOCK FLAG
@@ -5371,14 +5373,42 @@ COLDSTART:
 	jsr	SCRTCH		; MORE POINTERS
 	lda	#<STROUT	; PUT CORRECT ADDRESSES IN TWO
 	ldy	#>STROUT	; USER VECTORS
-	sta	GOSTROUTZ+1
-	sty	GOSTROUTZ+2
-	lda	#<RESTART
-	ldy	#>RESTART
-	sta	GOWARM+1
-	sty	GOWARM+2
-	jmp	(GOWARM+1)	; SILLY, WHY NOT JUST "JMP RESTART"
+	;sta	GOSTROUTZ+1
+	;sty	GOSTROUTZ+2
+	;lda	#<RESTART
+	;ldy	#>RESTART
+	;sta	GOWARM+1
+	;sty	GOWARM+2
+	;jmp	(GOWARM+1)	; SILLY, WHY NOT JUST "JMP RESTART"
 
+   ;prints boot message
+   lda   #<BOOT_MSG
+   ldy   #>BOOT_MSG
+   jsr   STROUT
+
+   ; computer FRE(0) in X/A
+   sec			
+	lda	FRETOP
+	sbc	STREND
+	tax
+	lda	FRETOP+1
+	sbc	STREND+1	
+
+   ; print int number in X/A
+   jsr   LINPRT
+
+   ; prints "bytes free"
+   lda   #<BYTESFREE_MSG
+   ldy   #>BYTESFREE_MSG
+   jsr   STROUT
+
+	jmp     RESTART
+
+BOOT_MSG:
+   ;      1234567890123456789012345678901234567890
+   .byte $0d, "*** APPLESOFT BASIC LITE SD V1.1 ***", $0d, $0d, $00
+BYTESFREE_MSG:
+   .byte " BYTES FREE", $0d, $00
 
 ; ----------------------------------------------------------------------------
 ; "CALL" STATEMENT
@@ -5511,13 +5541,13 @@ STARTFROMCART:
 	txs			; LINE BUFFER DURING PARSING
 	lda	#<COLDSTART	; SET RESTART TO COLD.START
 	ldy	#>COLDSTART	; UNTIL COLDSTART IS COMPLETED
-	sta	GOWARM+1
-	sty	GOWARM+2
-	sta	GOSTROUTZ+1	; ALSO SECOND USER VECTOR...
-	sty	GOSTROUTZ+2	; ..WE SIMPLY MUST FINISH COLD.START!
+	;sta	GOWARM+1
+	;sty	GOWARM+2
+	;sta	GOSTROUTZ+1	; ALSO SECOND USER VECTOR...
+	;sty	GOSTROUTZ+2	; ..WE SIMPLY MUST FINISH COLD.START!
 	lda	#$4C		; "JMP" OPCODE FOR 4 VECTORS
-	sta	GOWARM		; WARM START
-	sta	GOSTROUTZ	; ANYONE EVER USE THIS ONE?
+	;sta	GOWARM		; WARM START
+	;sta	GOSTROUTZ	; ANYONE EVER USE THIS ONE?
 	sta	JMPADRS		; USED BY FUNCTIONS (JSR JMPADRS)
 
 ; ----------------------------------------------------------------------------
@@ -5549,14 +5579,14 @@ STARTFROMCART:
 	ldy #0
 	lda #0
 	sta (TXTPTR),y ; ZERO THE TXTPTR - FOR SAKE OF RUN STATEMENT
-	lda	#<STROUT	; PUT CORRECT ADDRESSES IN TWO
-	ldy	#>STROUT	; USER VECTORS
-	sta	GOSTROUTZ+1
-	sty	GOSTROUTZ+2
-	lda	#<RESTART
-	ldy	#>RESTART
-	sta	GOWARM+1
-	sty	GOWARM+2
+	;lda	#<STROUT	; PUT CORRECT ADDRESSES IN TWO
+	;ldy	#>STROUT	; USER VECTORS
+	;sta	GOSTROUTZ+1
+	;sty	GOSTROUTZ+2
+	;lda	#<RESTART
+	;ldy	#>RESTART
+	;sta	GOWARM+1
+	;sty	GOWARM+2
 	lda #$00
 	sta CURLIN
 	sta CURLIN+1
