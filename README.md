@@ -3,10 +3,10 @@
 This is a stripped-down version of Applesoft BASIC (Microsoft 6502 BASIC) for the Apple-1,
 forked from [applesoft-lite](https://github.com/txgx42/applesoft-lite). 
 
-It has been modified to perform LOAD and SAVE operations via Apple-1 SD Card interface by P-LAB.
+It has been modified to perform `LOAD` and `SAVE` operations via the SD Card interface by P-LAB.
 
 Changes:
-- `LOAD`, `SAVE`, `MENU` for SD card operations
+- commands `LOAD`, `SAVE`, `MENU` for SD card operations
 - zero page memory locations below `$4A` have been relocated to avoid conflicts with the SD Card firmware
 - `GOWARM` and `GOSTROUT` zero page entry points have been removed (saving 6 bytes)
 - added cold boot message to differentiate it from warm boot
