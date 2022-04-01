@@ -54,6 +54,7 @@ TOKEN_EQUAL	= $AF
 TOKEN_SGN	= $B1
 TOKEN_LEFTSTR	= $BF
 
+STARTROM:
 
 ; ----------------------------------------------------------------------------
 ; Cold and warm entry points at $E000 and E003
@@ -5339,6 +5340,11 @@ COLDSTART:
 	sty	LINNUM+1
 	ldy	#0
 @2:	inc	LINNUM+1	; TEST FIRST BYTE OF EACH PAGE
+
+	lda   LINNUM+1    ; do not invade Applesoft BASIC space
+	cmp   #>STARTROM  ;    when it's running in RAM
+	beq   @3          ;
+
 	lda	(LINNUM),y	; BY COMPLEMENTING IT AND WATCHING
 	eor	#$FF		; IT CHANGE THE SAME WAY
 	sta	(LINNUM),y
