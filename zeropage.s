@@ -40,6 +40,9 @@ PROMPT		:= $00F9;
 
 ; non relocated ZP locations
 
+RNDL        := $004e ; Random number incremented by the keyboard routine 
+RNDH        := $004f ;   can be used as seed for RND()
+
 LINNUM		:= $0050	; Converted line #
 TEMPPT		:= $0052	; Last used temp string desc
 LASTPT		:= $0053	; Last used temp string pntr

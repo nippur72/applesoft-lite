@@ -25,7 +25,11 @@ MONECHO         := $FFEF
 ; ----------------------------------------------------------------------------
 ; Get keystroke from keyboard (RDKEY)
 ; ----------------------------------------------------------------------------
-RDKEY:
+RDKEY:   
+   inc   RNDL       ; increment random number
+   bne   @1         ;   mimics AppleII ROM routine at $FD1B 
+   inc   RNDH       ;
+@1:
 	lda	KEYBOARDCR	; Key ready?
 	bpl	RDKEY		; Loop until ready
 	lda	KEYBOARD	; Load character
