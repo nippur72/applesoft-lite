@@ -28,7 +28,6 @@
 
 
 ; ----------------------------------------------------------------------------
-STACK		:= $0100
 STACK		   := $0100
 INPUTBUFFER	:= $0200
 RAMSTART    := $0800
@@ -5591,3 +5590,5 @@ STARTFROMCART:
 	sta CURLIN
 	sta CURLIN+1
 	jmp	FIX_LINKS ; FIX LINKS FOR PROGRAM
+
+ENDROM:
