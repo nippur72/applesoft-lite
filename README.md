@@ -10,6 +10,7 @@ Changes:
 - zero page memory locations below `$4A` have been relocated to avoid conflicts with the SD Card firmware
 - `GOWARM` and `GOSTROUT` zero page entry points have been removed (saving 6 bytes)
 - added cold boot message to differentiate it from warm boot
+- keyboard routine updates locations `$4e` and `$4f` to be used as random number or random seed for the `RND()` function (e.g. `LET R=RND(-PEEK(78)-PEEK(79)*256)`)
 
 ## Other forks
 
