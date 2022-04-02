@@ -41,19 +41,19 @@ RDKEY:
 ; adapted from Apple II monitor
 ; ----------------------------------------------------------------------------
 NOTCR:
-	cmp	#$18		; CTRL-X?
+	cmp	#$1b		; Escape (was $18 CTRL-X?)
 	beq	CANCEL		; Cancel line if so
-	jsr	MONECHO		; Output using monitor ECHO routine
-	cmp	#'_'		; backspace?
+	cmp	#8		;  backspace?
 	beq	BCKSPC		; Yes, do backspace...
+	jsr	MONECHO		; Output using monitor ECHO routine
 NOTCR1:	inx
 	bne	NXTCHAR		; Wasn't backspace or CTRL+X, get next key
 CANCEL:	jsr	OUTSLASH	; Output a "\" to indicate cancelled line
 GETLNZ:	jsr	CRDO		; new line
 GETLN:	jsr	OUTPROMPT	; Display the prompt
 	ldx	#$01		; Set cursor at 1, it gets decremented later
-BCKSPC:	txa
-	beq	GETLNZ		; Backspace with nothing on the line? start new line
+;BCKSPC:	txa
+;	beq	GETLNZ		; Backspace with nothing on the line? start new line
 	dex			; Move "cursor" back one space
 NXTCHAR:
 	jsr	RDKEY		; Read key from keyboard
@@ -61,8 +61,24 @@ ADDINP:	sta	INPUTBUFFER,x	; Put it in the input buffer
 	cmp	#$0D		; CR?
 	bne	NOTCR		; No, keep looping
 	jsr	CRDO		; Output CR
-	rts	
+	rts
 
+BCKSPC:
+	txa
+	beq	NXTCHAR   ; Backspace with nothing on the line, does nothing
+	jsr	CRDO		 ; Outputs CR for reprinting of the line
+	jsr   OUTPROMPT ; Outputs the prompt
+	dex             ; Trims 1 character back
+	stx   TEMP2     ; Use temporary variables to save length of line
+	beq   NXTCHAR   ; If after trim the line is empty do nothing
+	ldy   #0        ; Start from first character in the input buffer
+BCKSPC1:
+	lda   INPUTBUFFER,y  ; Prints character
+	jsr   OUTDO          ;
+	iny                  ; Point to next character
+	dec   TEMP2          ; Decrement line lentgh counter
+	bne   BCKSPC1        ; End of line reached? No, continue printing
+	beq   NXTCHAR        ; Yes, returns to input line
 
 ; ----------------------------------------------------------------------------
 ; These moved here from the main Applesoft code to save a few bytes
