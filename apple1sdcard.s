@@ -7,10 +7,10 @@
 .import ERROR, FIX_LINKS, OUTDO
 .export SDCardLoad, SDCardSave, SDCardMenu
 
-SDCARD_FILENAME := $0255    ; SD card buffer for filename (label "filename" from sdcard.sym)
+SDCARD_FILENAME := $0200    ; SD card buffer for filename (label "filename" from sdcard.sym)
 SDCARD_MONITOR  := $8000    ; EPROM entry point for SD card OS
 SDCARD_LOAD     := $8d0e    ; label "comando_load_bas" from sdcard.sym 
-SDCARD_SAVE     := $8a75    ; label "comando_save" from sdcard.sym 
+SDCARD_SAVE     := $8a75    ; label "comando_asave" from sdcard.sym
 SDCARD_DIR      := $90de    ; label "comando_dir" from sdcard.sym 
 SDCARD_EPROM_ID := $95e3    ; label "chksum_table" from sdcard.sym
 
