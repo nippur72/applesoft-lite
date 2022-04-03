@@ -15,7 +15,7 @@
 .setcpu "6502"
 .segment "BASIC"
 
-.export FIX_LINKS, ERROR, INPUTBUFFER
+.export FIX_LINKS, ERROR, INPUTBUFFER, GETSTR, FRMEVL
 .exportzp ERR_SYNTAX, ERR_NOSDCARD
 
 .import CLS, OUTDO, CRDO, OUTSP, OUTQUES	; Imports from io.s

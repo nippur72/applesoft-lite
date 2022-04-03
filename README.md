@@ -13,6 +13,7 @@ Changes:
 - keyboard routine updates locations `$4e` and `$4f` to be used as random number or random seed for the `RND()` function (e.g. `LET R=RND(-PEEK(78)-PEEK(79)*256)`)
 - smart edit (backspace eats a character and line in printed again)
 - `ESC` key cancels the input line as in Woz monitor (before was `CTRL`+`X`)
+- `LOAD` and `SAVE` work with string arguments (e.g. `SAVE "HELLO"`)
 
 
 ## Other forks

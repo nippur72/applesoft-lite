@@ -4,7 +4,7 @@
 .include "zeropage.s"
 
 .importzp ERR_SYNTAX, ERR_NOSDCARD
-.import ERROR, FIX_LINKS, OUTDO
+.import ERROR, FIX_LINKS, OUTDO, GETSTR, FRMEVL
 .export SDCardLoad, SDCardSave, SDCardMenu
 
 SDCARD_FILENAME := $0200    ; SD card buffer for filename (label "filename" from sdcard.sym)
@@ -42,18 +42,18 @@ SynErr:
 ; ----------------------------------------------------------------------------
 ; Copies the file name from input line to the SD filename buffer
 ; ----------------------------------------------------------------------------
-GetFileName:			; Get file name from input line
-	dec	TXTPTR
-	ldy	#0
-@1: jsr	CHRGET		        ; Get next character from the input line
-	beq	@2		            ; Is it null (EOL)?
-	sta	SDCARD_FILENAME,y	; Not EOL, store it in filename string
-	iny
-    bne	@1			        ; no, go back for more
-@2:    
-    lda #0                  ; string terminator
-    sta	SDCARD_FILENAME,y	; end string with terminator    
-    rts
+GetFileName:
+	jsr FRMEVL                ; evaluate expression
+	jsr	GETSTR                ; gets the string; Y=length, (INDEX)=string content
+    lda #0                    ; string terminator
+	sta SDCARD_FILENAME,y     ; write string terminator first
+@1:	dey                       ; decrement write position
+	cpy #255                  ; reached -1 ?
+	beq @2                    ; yes, end
+	lda (INDEX), y            ; copy from string
+	sta SDCARD_FILENAME,y     ; to sd filename buffer
+	jmp @1                    ; loops
+@2: rts                       ; end, filename + 0 is at SDCARD_FILENAME
 
 ; ----------------------------------------------------------------------------
 ; Bring up the Apple-1 Serial Interface menu
@@ -66,25 +66,23 @@ SDCardMenu:
 ; Save program via the Apple-1 SD Card Interface
 ; ----------------------------------------------------------------------------
 SDCardSave:
-	jsr	CheckSDCard
-    jsr GetFileName
-    jsr SDCARD_SAVE
-    rts
+	jsr	CheckSDCard          ; check that SD card interface is plugged
+    jsr GetFileName          ; gets the string file name
+    jsr SDCARD_SAVE          ; do the actual save
+
+	; clears the filename buffer because it's also the basic input in immediate mode
+	ldy #$7f                 ; $200-$27F
+	lda #00                  ; 0 = END of program, causes the parsing to stop
+@3: sta $200,y               ; writes into buffer
+	dey                      ; decrement position
+	bpl @3                   ; if not -1 continue
+    rts                      ; finished, return to BASIC
 
 ; ----------------------------------------------------------------------------
 ; Read program from Apple-1 SD Card Interface
 ; ----------------------------------------------------------------------------
 SDCardLoad:
-    jsr	CheckSDCard
-    jsr GetFileName
-    jsr SDCARD_LOAD
-	jmp	FIX_LINKS
-
-;; ----------------------------------------------------------------------------
-;; Save program via the Apple-1 SD Card Interface
-;; ----------------------------------------------------------------------------
-;SDCardDir:
-;	jsr	CheckSDCard
-;    jsr GetFileName
-;    jsr SDCARD_DIR
-;    rts
+    jsr	CheckSDCard          ; check that SD card interface is plugged
+    jsr GetFileName          ; gets the string file name
+    jsr SDCARD_LOAD          ; do the actual load
+	jmp	FIX_LINKS            ; ajdust the links (not necessary but doesn't do harm)
