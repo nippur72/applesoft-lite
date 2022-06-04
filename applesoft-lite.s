@@ -5411,7 +5411,8 @@ COLDSTART:
 
 BOOT_MSG:
    ;      1234567890123456789012345678901234567890
-   .byte $0d, "*** APPLESOFT BASIC LITE SD V1.1 ***", $0d, $0d, $00
+   ;.byte $0d, "*** APPLESOFT BASIC LITE SD V1.1 ***", $0d, $0d, $00
+	.byte $0d, "*** APPLESOFT BASIC LITE SD V1.2 ***", $0d, $0d, $00
 BYTESFREE_MSG:
    .byte " BYTES FREE", $0d, $00
 
