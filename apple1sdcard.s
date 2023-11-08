@@ -16,28 +16,32 @@ SDCARD_FILENAME := $0200    ; SD card buffer for filename (label "filename" from
 ; SDCARD_EPROM_ID := $95e9    ; label "chksum_table" from sdcard.sym
 
 ; values for SD OS 1.2 firmware EPROM
+;SDCARD_MONITOR  := $8000    ; EPROM entry point for SD card OS
+;SDCARD_LOAD     := $8d1a    ; label "comando_load_bas" from sdcard.sym
+;SDCARD_SAVE     := $8a7e    ; label "comando_asave" from sdcard.sym
+;SDCARD_EPROM_ID := $95f2    ; label "chksum_table" from sdcard.sym
+
+; values for SD OS 1.3 firmware EPROM
 SDCARD_MONITOR  := $8000    ; EPROM entry point for SD card OS
-SDCARD_LOAD     := $8d1a    ; label "comando_load_bas" from sdcard.sym
-SDCARD_SAVE     := $8a7e    ; label "comando_asave" from sdcard.sym
-SDCARD_EPROM_ID := $95f2    ; label "chksum_table" from sdcard.sym
+SDCARD_LOAD     := $903a    ; label "comando_load_bas" from sdcard.sym
+SDCARD_SAVE     := $8e08    ; label "comando_asave" from sdcard.sym
+SDCARD_EPROM_ID := $97b6    ; label "chksum_table" from sdcard.sym
 
 ; ----------------------------------------------------------------------------
-; See if Apple-1 SD card is present and display error if not
+; See if Apple-1 SD card eprom is present and display error if not
 ; ----------------------------------------------------------------------------
 CheckSDCard:
-	ldy	SDCARD_EPROM_ID
-	cpy	#$80
-	bne	SDCardErr
-	ldy	SDCARD_EPROM_ID + 1
-	cpy	#$80
-	bne	SDCardErr
-	ldy	SDCARD_EPROM_ID + 2
-	cpy	#$80
-	bne	SDCardErr
-	ldy	SDCARD_EPROM_ID + 3
-	cpy	#$8A
-	bne	SDCardErr
+	ldx #3                  ; four bytes
+CheckSDCard1:
+	lda SDCARD_EPROM_ID,x   ; read eprom
+	cmp EpromCheck,x        ; compare with known values
+	bne	SDCardErr           ; if different than there's no SD card eprom
+	dex
+	bpl CheckSDCard1
 	rts
+
+EpromCheck:
+	.byte $80,$80,$80,$8A    
 
 SDCardErr:
     ldx	#ERR_NOSDCARD

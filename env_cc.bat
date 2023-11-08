@@ -1,0 +1,1 @@
+PATH %PATH%;C:\Users\Nino1\Desktop\USB\compilers\cc65\bin;"c:\Program Files (x86)\GnuWin32\bin\"
